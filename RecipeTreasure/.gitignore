@@ -1,0 +1,37 @@
+# =================================
+# Node.js / Express (server)
+# =================================
+server/node_modules/
+server/uploads/
+server/.env
+server/logs
+server/*.log
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+
+# =================================
+# React / Client (frontend)
+# =================================
+client/node_modules/
+client/.env
+client/build/
+client/dist/
+client/.cache/
+
+# =================================
+# Common
+# =================================
+*.log
+logs/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE / Editor settings
+.vscode/
+.idea/
+
+# Misc
+*.tsbuildinfo
