@@ -11,6 +11,8 @@ import commentRoute from "./route/commentRoute.js";
 dotenv.config();
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Middlewares
 app.use(cors({ origin: true, credentials: true }));

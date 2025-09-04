@@ -3,19 +3,24 @@ import {
   createRecipe,
   getRecipes,
   getRecipeById,
+  updateRecipe,
+  deleteRecipe,
+  getRecipesByCategory,
+  getCategories, // ✅ new
+  searchRecipes,
 } from "../controllers/recipeController.js";
 import auth from "../middlewares/auth.js";
 import upload from "../middlewares/multer.js";
 
 const router = express.Router();
 
-// Create recipe (needs login)
 router.post("/", auth, upload.single("image"), createRecipe);
-
-// Get all recipes (auth optional, but if logged in → extra info)
 router.get("/", auth, getRecipes);
-
-// Get single recipe
+router.get("/category/:category", auth, getRecipesByCategory);
+router.get("/categories", auth, getCategories);
+router.get("/search", auth, searchRecipes);
 router.get("/:id", auth, getRecipeById);
+router.put("/:id", auth, upload.single("image"), updateRecipe);
+router.delete("/:id", auth, deleteRecipe);
 
 export default router;
