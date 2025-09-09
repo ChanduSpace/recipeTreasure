@@ -1,10 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import Footer from "../components/Footer";
+import { useParams } from "react-router";
+import api from "../api";
 
 export default function RecipeDetail() {
+  const { id } = useParams();
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        const res = await api.get(`/recipe/${id}`);
+        setRecipe(res.data);
+        console.log(res.data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [id]);
+
+  if (loading) return <p className="text-center mt-20">Loading...</p>;
+  if (!recipe) return <p className="text-center mt-20">Recipe not found</p>;
   return (
     <>
       <Navbar />
@@ -18,8 +40,12 @@ export default function RecipeDetail() {
                 <Avatar size="large" icon={<UserOutlined />} />
               </div>
               <div>
-                <p className="font-medium">Person Name</p>
-                <p className="text-gray-500 text-sm">10 Recipes</p>
+                <p className="font-medium">
+                  {recipe.user?.name || "Unknown User"}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {recipe.user ? "1 Recipe" : ""}
+                </p>
               </div>
             </div>
 
@@ -36,12 +62,22 @@ export default function RecipeDetail() {
 
           {/* Recipe Title */}
           <div className="w-full max-w-4xl border-b border-yellow-400 text-center pb-2 mb-6">
-            <h1 className="text-2xl font-bold text-[#EFC81A]">Recipe Name</h1>
+            <h1 className="text-2xl font-bold text-[#EFC81A]">
+              {recipe.title}
+            </h1>
           </div>
 
           {/* Recipe Image */}
           <div className="w-full max-w-md h-60 bg-gray-200 flex items-center justify-center rounded-md mb-8">
-            <span className="text-gray-500 font-medium">Photo</span>
+            {recipe.image ? (
+              <img
+                src={recipe.image}
+                alt={recipe.title}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <span className="text-gray-500 font-medium">No Photo</span>
+            )}
           </div>
 
           {/* Recipe Content */}
@@ -50,23 +86,29 @@ export default function RecipeDetail() {
 
             {/* Ingredients */}
             <p className="mb-2">
-              <span className="font-semibold">Ingredients:</span> Lorem ipsum
-              dolor sit amet, consectetur adipiscing elit. Ut et massa mi.
+              <span className="font-semibold">Ingredients:</span>{" "}
+              {Array.isArray(recipe.ingredients)
+                ? recipe.ingredients.join(", ")
+                : recipe.ingredients || "Not provided"}
             </p>
 
             {/* Description */}
             <p className="mb-4">
-              <span className="font-semibold">Description:</span> Lorem ipsum
-              dolor sit amet, consectetur adipiscing elit. Ut et massa mi.
-              Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla,
-              mattis ligula consectetur, ultrices mauris. Maecenas vitae mattis
-              tellus. Nullam quis imperdiet augue. Vestibulum auctor ornare leo,
-              non suscipit magna interdum eu. Curabitur pellentesque nibh nibh,
-              at maximus ante fermentum sit amet. Pellentesque commodo lacus at
-              sodales sodales. Quisque sagittis orci ut diam condimentum, vel
-              euismod erat placerat. In iaculis arcu eros, eget tempus orci
-              facilisis id.
+              <span className="font-semibold">Description:</span>{" "}
+              {recipe.description}
             </p>
+
+            {Array.isArray(recipe.instructions) &&
+              recipe.instructions.length > 0 && (
+                <div className="mb-4">
+                  <span className="font-semibold">Instructions:</span>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    {recipe.instructions.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
             {/* Video Link */}
             <p>

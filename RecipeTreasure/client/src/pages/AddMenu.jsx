@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import api from "../api";
 
 export default function RecipeForm() {
   const [photo, setPhoto] = useState(null);
@@ -11,14 +12,20 @@ export default function RecipeForm() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setPhoto(URL.createObjectURL(file));
+      setPhoto(file);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const recipeData = { photo, title, description, category };
-    console.log(recipeData);
+    const recipeData = new FormData();
+    recipeData.append("image", photo);
+    recipeData.append("title", title);
+    recipeData.append("description", description);
+    recipeData.append("category", category);
+
+    await api.post("/recipe", recipeData);
+
     alert("Recipe Posted Successfully!");
   };
 
@@ -39,7 +46,7 @@ export default function RecipeForm() {
           <div className="border-gray-300 border-1 rounded-lg h-70 flex items-center justify-center bg-gray-100 mb-3 overflow-hidden w-full">
             {photo ? (
               <img
-                src={photo}
+                src={URL.createObjectURL(photo)}
                 alt="Recipe"
                 className="object-cover w-full h-full"
               />

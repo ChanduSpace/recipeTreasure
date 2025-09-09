@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
 export default function EditRecipePage() {
   const { id } = useParams(); // Recipe ID from URL
-  //   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   // Simulating fetching recipe details (replace with API call)
   const [recipe, setRecipe] = useState({
