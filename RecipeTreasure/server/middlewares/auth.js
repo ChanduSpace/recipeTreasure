@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import User from "../models/user.js";
 
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
     const parts = authHeader.split(" ");
@@ -13,9 +14,15 @@ const auth = (req, res, next) => {
 
     const token = parts[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Ensure consistent shape
-    req.user = { id: decoded.id, email: decoded.email, name: decoded.name };
-    return next();
+
+    // ✅ fetch full user from DB
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    req.user = user; // now contains _id and profilePicture
+    next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }

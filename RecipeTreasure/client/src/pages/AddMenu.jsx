@@ -8,6 +8,8 @@ export default function RecipeForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [ingredients, setIngredients] = useState([]);
+  const [instructions, setInstructions] = useState([""]);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -24,10 +26,42 @@ export default function RecipeForm() {
     recipeData.append("description", description);
     recipeData.append("category", category);
 
-    await api.post("/recipe", recipeData);
+    // send arrays as comma-separated strings
+    recipeData.append("ingredients", ingredients.join(","));
+    recipeData.append("instructions", instructions.join(","));
 
-    alert("Recipe Posted Successfully!");
+    try {
+      await api.post("/recipe", recipeData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Recipe Posted Successfully!");
+      // reset form
+      setPhoto(null);
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setIngredients([]);
+      setInstructions([""]);
+    } catch (err) {
+      console.error("Error posting recipe:", err.response?.data || err.message);
+      alert("Error posting recipe");
+    }
   };
+
+  // Remove ingredient chip
+  const removeIngredient = (index) =>
+    setIngredients(ingredients.filter((_, i) => i !== index));
+
+  // Add/remove instructions
+  const handleInstructionChange = (index, value) => {
+    const updated = [...instructions];
+    updated[index] = value;
+    setInstructions(updated);
+  };
+
+  const addInstruction = () => setInstructions([...instructions, ""]);
+  const removeInstruction = (index) =>
+    setInstructions(instructions.filter((_, i) => i !== index));
 
   return (
     <>
@@ -38,9 +72,10 @@ export default function RecipeForm() {
             Add The Recipe Of Your Choice !
           </h2>
         </div>
+
         <form
           onSubmit={handleSubmit}
-          className="w-[500px]  rounded-2xl flex items-center justify-center flex-col mb-20"
+          className="w-[500px] rounded-2xl flex items-center justify-center flex-col mb-20"
         >
           {/* Photo Upload */}
           <div className="border-gray-300 border-1 rounded-lg h-70 flex items-center justify-center bg-gray-100 mb-3 overflow-hidden w-full">
@@ -80,12 +115,83 @@ export default function RecipeForm() {
 
           {/* Description */}
           <textarea
-            placeholder="Ingredients & Description"
+            placeholder="Short description of recipe"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full border-gray-300 border-0 rounded-lg bg-gray-100 px-3 py-2 mt-3 h-28 resize-none outline-none"
+            className="w-full border-gray-300 border-0 rounded-lg bg-gray-100 px-3 py-2 mt-3 h-20 resize-none outline-none"
             required
           />
+
+          {/* Ingredients as tags */}
+          <div className="w-full mt-4">
+            <h3 className="font-semibold mb-2">Ingredients</h3>
+
+            {/* Chips */}
+            <div className="flex flex-wrap gap-2 mb-2">
+              {ingredients.map((ing, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full"
+                >
+                  <span>{ing}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(idx)}
+                    className="ml-2 text-red-500 font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <input
+              type="text"
+              placeholder="Type ingredient and press Enter"
+              className="w-full border-gray-300 border-0 rounded-lg bg-gray-100 px-3 py-2 outline-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                  e.preventDefault();
+                  setIngredients([...ingredients, e.target.value.trim()]);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </div>
+
+          {/* Instructions */}
+          <div className="w-full mt-4">
+            <h3 className="font-semibold mb-2">Instructions</h3>
+            {instructions.map((step, idx) => (
+              <div key={idx} className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={step}
+                  onChange={(e) => handleInstructionChange(idx, e.target.value)}
+                  className="flex-1 border-gray-300 border-0 rounded-lg bg-gray-100 px-3 py-2 outline-none"
+                  placeholder={`Step ${idx + 1}`}
+                  required
+                />
+                {instructions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeInstruction(idx)}
+                    className="text-red-500"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addInstruction}
+              className="text-sm text-yellow-600 hover:underline"
+            >
+              + Add step
+            </button>
+          </div>
 
           {/* Categories */}
           <div className="flex justify-center gap-4 mt-4">
@@ -101,7 +207,7 @@ export default function RecipeForm() {
                   checked={category === cat}
                   onChange={(e) => setCategory(e.target.value)}
                   className="bg-[#EFC81A]"
-                  required={true}
+                  required
                 />
                 <span className="text-sm">{cat}</span>
               </label>

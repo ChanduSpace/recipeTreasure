@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import RecipeCard from "../components/RecipeCard"; // reuse your card
 import Footer from "../components/Footer";
 import api from "../api";
 
@@ -8,32 +7,10 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("recipes");
-  const [recipes, setRecipes] = useState([
-    {
-      id: 1,
-      title: "Recipe Title 1",
-      ingredients: "Ingredients",
-      description: "Description Here",
-      photo: null,
-    },
-    {
-      id: 2,
-      title: "Recipe Title 2",
-      ingredients: "Ingredients",
-      description: "Description Here",
-      photo: null,
-    },
-    {
-      id: 3,
-      title: "Recipe Title 3",
-      ingredients: "Ingredients",
-      description: "Description Here",
-      photo: null,
-    },
-  ]);
-
+  const [recipes, setRecipes] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
 
+  // fetch profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -48,14 +25,38 @@ export default function ProfilePage() {
     fetchProfile();
   }, []);
 
-  if (loading) {
-    return <h1>Loading...</h1>;
-  }
+  // handle profile photo upload
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("photo", file);
+
+    try {
+      const { data } = await api.put("/user/profile", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // merge so we don't lose name/email
+      setProfile((prev) => ({
+        ...prev,
+        ...data.user,
+      }));
+      alert("Profile photo updated!");
+    } catch (err) {
+      console.error("Update error", err.response?.data || err.message);
+    }
+  };
 
   const handleDelete = (id) => {
     setRecipes(recipes.filter((r) => r.id !== id));
     setDeleteId(null);
   };
+
+  if (loading) {
+    return <h1>Loading...</h1>;
+  }
 
   return (
     <>
@@ -63,7 +64,7 @@ export default function ProfilePage() {
 
       <div className="p-6 max-w-5xl mx-auto mt-18 w-[60%]">
         {/* Profile Section */}
-        <div className=" pl-3 mb-6 pb-3 border-b-[#EFC81A] border-b-1">
+        <div className="pl-3 mb-6 pb-3 border-b-[#EFC81A] border-b-1">
           <h2 className="border-l-2 pl-2 border-yellow-400 text-lg font-semibold">
             Your Profile !!!
           </h2>
@@ -72,23 +73,37 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6 mb-10">
           {/* Profile Photo */}
           <div className="flex flex-col justify-center items-center">
-            <div className="w-40 h-40 bg-gray-200 rounded-md flex items-center justify-center">
-              <span className="text-gray-600">Profile Photo</span>
-            </div>
-            <button className="bg-[#EFC81A] text-white text-xs px-3 py-1 mt-2 rounded hover:bg-yellow-500">
+            {profile?.profilePicture ? (
+              <img
+                src={profile.profilePicture}
+                alt="Profile"
+                className="w-40 h-40 rounded-md object-cover"
+              />
+            ) : (
+              <div className="w-40 h-40 bg-gray-200 rounded-md flex items-center justify-center">
+                <span className="text-gray-600">Profile Photo</span>
+              </div>
+            )}
+            <label className="bg-[#EFC81A] text-white text-xs px-3 py-1 mt-2 rounded hover:bg-yellow-500 cursor-pointer">
               Edit Profile
-            </button>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+            </label>
           </div>
 
           {/* Info */}
           <div className="flex flex-col gap-5">
             <p>
-              <span className="text-[#EFC81A] font-semibold">Name:</span>
-              {profile.name}
+              <span className="text-[#EFC81A] font-semibold">Name:</span>{" "}
+              {profile?.name}
             </p>
             <p>
-              <span className="text-[#EFC81A] font-semibold">Email:</span>
-              {profile.email}
+              <span className="text-[#EFC81A] font-semibold">Email:</span>{" "}
+              {profile?.email}
             </p>
             <p>
               <span className="text-[#EFC81A] font-semibold">
@@ -141,12 +156,12 @@ export default function ProfilePage() {
                 <div className="flex gap-3 mt-3">
                   {activeTab === "recipes" && (
                     <>
-                      <button className="text-xs  h-6 px-2 py-1 bg-[#EFC81A] text-white rounded hover:bg-yellow-500">
+                      <button className="text-xs h-6 px-2 py-1 bg-[#EFC81A] text-white rounded hover:bg-yellow-500">
                         Edit Menu
                       </button>
                       <button
                         onClick={() => setDeleteId(recipe.id)}
-                        className="text-xs  h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                       >
                         Delete Menu
                       </button>
@@ -154,13 +169,13 @@ export default function ProfilePage() {
                   )}
 
                   {activeTab === "liked" && (
-                    <button className="text-xs  h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    <button className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                       Unlike Menu
                     </button>
                   )}
 
                   {activeTab === "bookmarked" && (
-                    <button className="text-xs  h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    <button className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                       Remove Bookmark
                     </button>
                   )}
@@ -173,10 +188,7 @@ export default function ProfilePage() {
         {/* Delete Modal */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* semi-transparent overlay */}
             <div className="absolute inset-0 bg-black/60 !bg-opacity-40"></div>
-
-            {/* modal content */}
             <div className="relative bg-white p-6 rounded-lg shadow-lg text-center">
               <p className="text-[#EFC81A] font-semibold mb-4">
                 Are you sure to delete the recipe?
@@ -184,13 +196,13 @@ export default function ProfilePage() {
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="text-xs  h-6 px-2 py-1 border rounded hover:bg-gray-100"
+                  className="text-xs h-6 px-2 py-1 border rounded hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDelete(deleteId)}
-                  className="text-xs  h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Delete
                 </button>

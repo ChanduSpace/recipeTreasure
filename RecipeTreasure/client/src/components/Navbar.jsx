@@ -15,6 +15,7 @@ const Navbar = () => {
       try {
         const { data } = await api.get("/user/profile");
         setProfile(data.user);
+        console.log(data.user);
       } catch (err) {
         console.log(err);
       } finally {
@@ -88,7 +89,15 @@ const Navbar = () => {
         </div>
         <div className="flex gap-4 text-black items-center">
           <NavLink to="/profile">
-            <Avatar size="large" icon={<UserOutlined />} />
+            {profile.profilePicture ? (
+              <img
+                className="w-10 h-10 rounded-full object-cover"
+                src={profile.profilePicture}
+                alt="profile"
+              />
+            ) : (
+              <Avatar size="large" icon={<UserOutlined />} />
+            )}
           </NavLink>
 
           <div>

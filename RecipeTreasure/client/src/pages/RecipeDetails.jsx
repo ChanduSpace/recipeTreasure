@@ -68,12 +68,12 @@ export default function RecipeDetail() {
           </div>
 
           {/* Recipe Image */}
-          <div className="w-full max-w-md h-60 bg-gray-200 flex items-center justify-center rounded-md mb-8">
+          <div className="w-full max-w-md h-60 bg-gray-200 flex items-center justify-center rounded-lg mb-8">
             {recipe.image ? (
               <img
                 src={recipe.image}
                 alt={recipe.title}
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full rounded-lg"
               />
             ) : (
               <span className="text-gray-500 font-medium">No Photo</span>
