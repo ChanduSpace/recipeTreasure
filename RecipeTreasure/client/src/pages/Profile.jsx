@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from "react";
+import { Pagination } from "antd";
+import { useNavigate } from "react-router";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import api from "../api";
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("recipes");
   const [recipes, setRecipes] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
+
+  const [page, setPage] = useState(1);
+  // const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const fetchRecipe = async (pageNum = 1) => {
+    try {
+      const { data } = await api.get(
+        `/recipe/my-recipes?page=${pageNum}&limit=5`
+      );
+      setRecipes(data.recipes);
+      setPage(data.page);
+      // setPages(data.pages);
+      setTotal(data.total);
+    } catch (err) {
+      console.log("fetching recipe failed", err);
+    }
+  };
 
   // fetch profile on mount
   useEffect(() => {
@@ -24,6 +45,10 @@ export default function ProfilePage() {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    fetchRecipe(page);
+  }, [page]);
 
   // handle profile photo upload
   const handlePhotoChange = async (e) => {
@@ -49,9 +74,15 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDelete = (id) => {
-    setRecipes(recipes.filter((r) => r.id !== id));
+  const handleDelete = async (id) => {
+    console.log("deleting recipe", id);
+    await api.delete(`/recipe/${id}`); // call backend
+
+    setRecipes(recipes.filter((r) => r._id !== id));
     setDeleteId(null);
+  };
+  const handleEdit = (id) => {
+    navigate(`/edit-menu/${id}`);
   };
 
   if (loading) {
@@ -69,7 +100,6 @@ export default function ProfilePage() {
             Your Profile !!!
           </h2>
         </div>
-
         <div className="flex items-center gap-6 mb-10">
           {/* Profile Photo */}
           <div className="flex flex-col justify-center items-center">
@@ -113,12 +143,10 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-
         {/* Tabs */}
         <div className="border-l-2 border-[#EFC81A] pl-3 mb-6">
           <h2 className="text-lg font-semibold">Your Recipes !!!</h2>
         </div>
-
         <div className="flex gap-6 border-b border-b-[#EFC81A] mb-4">
           {["recipes", "liked", "bookmarked"].map((tab) => (
             <button
@@ -136,14 +164,24 @@ export default function ProfilePage() {
             </button>
           ))}
         </div>
-
         {/* Recipes List */}
         <div className="space-y-4">
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="flex gap-8 p-4 ">
+            <div
+              key={recipe._id}
+              onClick={() => navigate(`/recipe/${recipe._id}`)}
+              className="flex gap-8 p-4 "
+            >
               {/* Left Photo */}
-              <div className="w-50 h-28 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-gray-500">Photo</span>
+              <div className="w-50 h-28 bg-gray-200 rounded-lg flex items-center justify-center">
+                {recipe.image ? (
+                  <img
+                    src={recipe.image}
+                    className="w-50 h-28 object-cover rounded-lg"
+                  />
+                ) : (
+                  <span className="text-gray-500">Photo</span>
+                )}
               </div>
 
               {/* Right Info */}
@@ -156,11 +194,21 @@ export default function ProfilePage() {
                 <div className="flex gap-3 mt-3">
                   {activeTab === "recipes" && (
                     <>
-                      <button className="text-xs h-6 px-2 py-1 bg-[#EFC81A] text-white rounded hover:bg-yellow-500">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // navigate(`/edit-recipe/${recipe._id}`);
+                          handleEdit(recipe._id);
+                        }}
+                        className="text-xs h-6 px-2 py-1 bg-[#EFC81A] text-white rounded hover:bg-yellow-500"
+                      >
                         Edit Menu
                       </button>
                       <button
-                        onClick={() => setDeleteId(recipe.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(recipe._id);
+                        }}
                         className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                       >
                         Delete Menu
@@ -184,7 +232,6 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
-
         {/* Delete Modal */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -210,6 +257,13 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+        <Pagination
+          current={page} // current page
+          total={total} // total recipes
+          pageSize={5}
+          onChange={(p) => setPage(p)}
+        />
+        ;
       </div>
       <Footer />
     </>

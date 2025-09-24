@@ -17,4 +17,6 @@ const recipeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+recipeSchema.index({ user: 1 });
+
 export default mongoose.model("Recipe", recipeSchema);

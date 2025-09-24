@@ -4,11 +4,15 @@ import { Button, Checkbox, Form, Input } from "antd";
 import api from "../api";
 import { useNavigate } from "react-router";
 
-const LoginAndSignupPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const LoginAndSignupPage = (props) => {
+  console.log(props);
+  const [isLogin, setIsLogin] = useState(props.page);
+  console.log(isLogin);
+  console.log(props.page);
   const navigate = useNavigate();
   const formToggleHandle = () => {
     setIsLogin(!isLogin);
+    navigate(isLogin ? "/register" : "/login");
     console.log(isLogin);
   };
   const onFinish = async (values) => {

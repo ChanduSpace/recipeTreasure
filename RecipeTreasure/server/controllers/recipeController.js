@@ -128,7 +128,7 @@ export const getRecipeById = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id).populate(
       "user",
-      "name email"
+      "name email profilePicture"
     );
     if (!recipe) return res.status(404).json({ message: "Recipe not found" });
 
@@ -141,7 +141,7 @@ export const getRecipeById = async (req, res) => {
       : false;
     const comments = await Comment.find({ recipe: recipe._id }).populate(
       "user",
-      "name"
+      "name profilePicture"
     );
 
     res.json({
@@ -317,5 +317,25 @@ export const searchRecipes = async (req, res) => {
   } catch (error) {
     console.error("Error searching recipes:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getMyRecipes = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const recipes = await Recipe.find({ user: req.user._id })
+      .select("title image category description  createdAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Recipe.countDocuments({ user: req.user._id });
+
+    res.json({ recipes, total, page, pages: Math.ceil(total / limit) });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recipes" });
   }
 };

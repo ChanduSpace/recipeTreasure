@@ -6,8 +6,9 @@ import {
   updateRecipe,
   deleteRecipe,
   getRecipesByCategory,
-  getCategories, // ✅ new
+  getCategories,
   searchRecipes,
+  getMyRecipes,
 } from "../controllers/recipeController.js";
 import auth from "../middlewares/auth.js";
 import upload from "../middlewares/multer.js";
@@ -19,6 +20,7 @@ router.get("/", auth, getRecipes);
 router.get("/category/:category", auth, getRecipesByCategory);
 router.get("/categories", auth, getCategories);
 router.get("/search", auth, searchRecipes);
+router.get("/my-recipes", auth, getMyRecipes);
 router.get("/:id", auth, getRecipeById);
 router.put("/:id", auth, upload.single("image"), updateRecipe);
 router.delete("/:id", auth, deleteRecipe);
