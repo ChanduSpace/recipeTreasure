@@ -6,6 +6,7 @@ import {
 import auth from "../middlewares/auth.js";
 
 const router = express.Router();
+router.get("/my-bookmarks", auth, getMyBookmarks);
 
 // Toggle bookmark
 router.post("/:recipeId", auth, toggleBookmark);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Pagination } from "antd";
+import { Pagination, Spin } from "antd";
 import { useNavigate } from "react-router";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -14,9 +14,9 @@ export default function ProfilePage() {
   const [deleteId, setDeleteId] = useState(null);
 
   const [page, setPage] = useState(1);
-  // const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
 
+  // fetch own recipes with pagination
   const fetchRecipe = async (pageNum = 1) => {
     try {
       const { data } = await api.get(
@@ -24,10 +24,28 @@ export default function ProfilePage() {
       );
       setRecipes(data.recipes);
       setPage(data.page);
-      // setPages(data.pages);
       setTotal(data.total);
     } catch (err) {
       console.log("fetching recipe failed", err);
+    }
+  };
+
+  // fetch liked recipes
+  const fetchLikedRecipes = async () => {
+    try {
+      const { data } = await api.get("/like/my-likes");
+      setRecipes(data.likedRecipes);
+    } catch (err) {
+      console.error("Error fetching liked recipes", err);
+    }
+  };
+  // Fetch bookmarked recipes
+  const fetchBookmarkedRecipes = async () => {
+    try {
+      const { data } = await api.get("/bookmark/my-bookmarks");
+      setRecipes((data.bookmarks || []).map((b) => b.recipe));
+    } catch (err) {
+      console.error("Error fetching bookmarked recipes", err);
     }
   };
 
@@ -39,6 +57,7 @@ export default function ProfilePage() {
         setProfile(data.user);
       } catch (error) {
         console.log("fetch error", error);
+        navigate("/login");
       } finally {
         setLoading(false);
       }
@@ -46,9 +65,16 @@ export default function ProfilePage() {
     fetchProfile();
   }, []);
 
+  // switch tab -> fetch data accordingly
   useEffect(() => {
-    fetchRecipe(page);
-  }, [page]);
+    if (activeTab === "recipes") {
+      fetchRecipe(page);
+    } else if (activeTab === "liked") {
+      fetchLikedRecipes();
+    } else if (activeTab === "bookmarked") {
+      fetchBookmarkedRecipes();
+    }
+  }, [activeTab, page]);
 
   // handle profile photo upload
   const handlePhotoChange = async (e) => {
@@ -63,7 +89,6 @@ export default function ProfilePage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // merge so we don't lose name/email
       setProfile((prev) => ({
         ...prev,
         ...data.user,
@@ -75,18 +100,38 @@ export default function ProfilePage() {
   };
 
   const handleDelete = async (id) => {
-    console.log("deleting recipe", id);
-    await api.delete(`/recipe/${id}`); // call backend
-
-    setRecipes(recipes.filter((r) => r._id !== id));
-    setDeleteId(null);
+    try {
+      await api.delete(`/recipe/${id}`);
+      setRecipes(recipes.filter((r) => r._id !== id));
+      setDeleteId(null);
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
   };
+
   const handleEdit = (id) => {
     navigate(`/edit-menu/${id}`);
   };
 
+  const handleUnlike = async (id) => {
+    try {
+      await api.post(`/like/${id}`); // toggle like
+      setRecipes(recipes.filter((r) => r._id !== id));
+    } catch (err) {
+      console.error("Unlike failed", err);
+    }
+  };
+  const handleRemoveBookmark = async (id) => {
+    try {
+      await api.post(`/bookmark/${id}`); // toggle bookmark
+      setRecipes(recipes.filter((r) => r._id !== id));
+    } catch (err) {
+      console.error("Remove bookmark failed", err);
+    }
+  };
+
   if (loading) {
-    return <h1>Loading...</h1>;
+    return <Spin size="large" className="loading-spinner" />;
   }
 
   return (
@@ -100,6 +145,7 @@ export default function ProfilePage() {
             Your Profile !!!
           </h2>
         </div>
+
         <div className="flex items-center gap-6 mb-10">
           {/* Profile Photo */}
           <div className="flex flex-col justify-center items-center">
@@ -139,14 +185,16 @@ export default function ProfilePage() {
               <span className="text-[#EFC81A] font-semibold">
                 Phone Number:
               </span>{" "}
-              1234567890
+              9876543210
             </p>
           </div>
         </div>
+
         {/* Tabs */}
         <div className="border-l-2 border-[#EFC81A] pl-3 mb-6">
           <h2 className="text-lg font-semibold">Your Recipes !!!</h2>
         </div>
+
         <div className="flex gap-6 border-b border-b-[#EFC81A] mb-4">
           {["recipes", "liked", "bookmarked"].map((tab) => (
             <button
@@ -164,13 +212,32 @@ export default function ProfilePage() {
             </button>
           ))}
         </div>
+
         {/* Recipes List */}
         <div className="space-y-4">
+          {activeTab === "recipes" && recipes.length === 0 && (
+            <p className="text-gray-500 text-center">
+              You haven’t added any recipes yet.
+            </p>
+          )}
+
+          {activeTab === "liked" && recipes.length === 0 && (
+            <p className="text-gray-500 text-center">
+              You haven’t liked any recipes yet.
+            </p>
+          )}
+
+          {activeTab === "bookmarked" && recipes.length === 0 && (
+            <p className="text-gray-500 text-center">
+              You haven’t bookmarked any recipes yet.
+            </p>
+          )}
+
           {recipes.map((recipe) => (
             <div
               key={recipe._id}
               onClick={() => navigate(`/recipe/${recipe._id}`)}
-              className="flex gap-8 p-4 "
+              className="flex gap-8 p-4 cursor-pointer"
             >
               {/* Left Photo */}
               <div className="w-50 h-28 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -197,7 +264,6 @@ export default function ProfilePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // navigate(`/edit-recipe/${recipe._id}`);
                           handleEdit(recipe._id);
                         }}
                         className="text-xs h-6 px-2 py-1 bg-[#EFC81A] text-white rounded hover:bg-yellow-500"
@@ -217,13 +283,25 @@ export default function ProfilePage() {
                   )}
 
                   {activeTab === "liked" && (
-                    <button className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnlike(recipe._id);
+                      }}
+                      className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
                       Unlike Menu
                     </button>
                   )}
 
                   {activeTab === "bookmarked" && (
-                    <button className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveBookmark(recipe._id);
+                      }}
+                      className="text-xs h-6 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
                       Remove Bookmark
                     </button>
                   )}
@@ -232,6 +310,7 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+
         {/* Delete Modal */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -257,14 +336,18 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-        <Pagination
-          current={page} // current page
-          total={total} // total recipes
-          pageSize={5}
-          onChange={(p) => setPage(p)}
-        />
-        ;
+
+        {/* Pagination only for "recipes" tab */}
+        {activeTab === "recipes" && (
+          <Pagination
+            current={page}
+            total={total}
+            pageSize={5}
+            onChange={(p) => setPage(p)}
+          />
+        )}
       </div>
+
       <Footer />
     </>
   );

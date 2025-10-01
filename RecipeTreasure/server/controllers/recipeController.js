@@ -4,8 +4,9 @@ import Bookmark from "../models/Bookmark.js";
 import Comment from "../models/Comment.js";
 import cloudinary from "../config/cloudinary.js";
 import { Readable } from "stream";
+import User from "../models/user.js";
+import { parse } from "path";
 
-// ✅ categories list (for validation + API)
 const ALLOWED_CATEGORIES = ["Salad", "Appetizer", "Main Course", "Dessert"];
 
 // ✅ helper: normalize strings/arrays
@@ -80,6 +81,47 @@ export const createRecipe = async (req, res) => {
     res
       .status(error.http_code || 500)
       .json({ message: error.message || "Server error" });
+  }
+};
+
+export const getAllRecipes = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const recipes = await Recipe.find()
+      .populate("user", "name profilePicture")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    const total = await Recipe.countDocuments();
+    const userId = req.user._id;
+    const recipesWithStatus = await Promise.all(
+      recipes.map(async (r) => {
+        const likedByMe = await Like.exists({ recipe: r._id, user: userId });
+        const bookmarkedByMe = await Bookmark.exists({
+          recipe: r._id,
+          user: userId,
+        });
+        const likes = await Like.countDocuments({ recipe: r._id });
+
+        return {
+          ...r.toObject(),
+          likedByMe: !!likedByMe,
+          bookmarkedByMe: !!bookmarkedByMe,
+          likes,
+        };
+      })
+    );
+    res.json({
+      recipes: recipesWithStatus,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch all users recipes" });
   }
 };
 
@@ -236,10 +278,31 @@ export const getRecipesByCategory = async (req, res) => {
 
     const recipes = await Recipe.find({ category }).populate(
       "user",
-      "name email"
+      "name email profilePicture"
     );
 
-    res.json(recipes);
+    const userId = req.user?._id;
+
+    const enriched = await Promise.all(
+      recipes.map(async (r) => {
+        const likes = await Like.countDocuments({ recipe: r._id });
+        const likedByMe = userId
+          ? await Like.exists({ recipe: r._id, user: userId })
+          : false;
+        const bookmarkedByMe = userId
+          ? await Bookmark.exists({ recipe: r._id, user: userId })
+          : false;
+
+        return {
+          ...r.toObject(),
+          likes,
+          likedByMe: !!likedByMe,
+          bookmarkedByMe: !!bookmarkedByMe,
+        };
+      })
+    );
+
+    res.json(enriched);
   } catch (error) {
     console.error("Error fetching category recipes:", error);
     res.status(500).json({ message: "Server error" });

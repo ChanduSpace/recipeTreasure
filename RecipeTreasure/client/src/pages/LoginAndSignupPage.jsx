@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Button, Checkbox, Form, Input } from "antd";
 import api from "../api";
 import { useNavigate } from "react-router";
+import { Spin } from "antd";
 
 const LoginAndSignupPage = (props) => {
   console.log(props);
   const [isLogin, setIsLogin] = useState(props.page);
+  const [loading, setLoading] = useState(false);
   console.log(isLogin);
   console.log(props.page);
   const navigate = useNavigate();
@@ -18,8 +20,11 @@ const LoginAndSignupPage = (props) => {
   const onFinish = async (values) => {
     try {
       if (isLogin) {
+        setLoading(true);
         const { data } = await api.post("/user/login", values);
         localStorage.setItem("token", data.token);
+        setLoading(false);
+
         navigate("/home");
       } else {
         await api.post("/user/register", values);
@@ -98,7 +103,7 @@ const LoginAndSignupPage = (props) => {
                 htmlType="submit"
                 className="ml-36 !bg-[#EFC81A] w-20"
               >
-                {isLogin ? "Login" : "Sign up"}
+                {loading ? <Spin /> : isLogin ? "Login" : "Sign up"}
               </Button>
             </Form.Item>
           </Form>

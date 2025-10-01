@@ -15,9 +15,9 @@ const Navbar = () => {
       try {
         const { data } = await api.get("/user/profile");
         setProfile(data.user);
-        console.log(data.user);
       } catch (err) {
         console.log(err);
+        navigate("/login");
       } finally {
         setLoading(false);
       }

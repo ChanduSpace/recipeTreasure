@@ -35,3 +35,24 @@ export const getLikes = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// Get all recipes liked by the logged-in user
+export const getLikedRecipes = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const likes = await Like.find({ user: userId }).populate({
+      path: "recipe",
+      select: "title description image ingredients category", // pick only needed fields
+    });
+
+    const likedRecipes = likes
+      .map((like) => like.recipe)
+      .filter((r) => r !== null); // in case a recipe got deleted
+
+    return res.status(200).json({ likedRecipes });
+  } catch (error) {
+    console.error("Error fetching liked recipes:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

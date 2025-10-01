@@ -1,16 +1,21 @@
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import api from "../api";
 import Navbar from "../components/Navbar";
 import RecipeCard from "../components/RecipeCard";
 
 const Category = () => {
-  const [category, setCategory] = useState("Appetizer");
-  console.log(category);
+  const { category } = useParams();
+  const [recipes, setRecipes] = useState([]);
 
-  const change = () => {
-    console.log("clicked");
-    setCategory("Salad");
-  };
+  useEffect(() => {
+    const fetchCategoryRecipes = async () => {
+      const res = await api.get(`/recipe/category/${category}`);
+      setRecipes(res.data);
+    };
+    fetchCategoryRecipes();
+  }, [category]);
+
   return (
     <>
       <Navbar />
@@ -27,15 +32,24 @@ const Category = () => {
           </h1>
         </div>
         <div className="flex items-start justify-center flex-col w-[60%]">
-          <RecipeCard />
-          <RecipeCard />
-          <RecipeCard />
-          <RecipeCard />
+          {recipes.map((recipe) => {
+            return (
+              <RecipeCard
+                key={recipe._id}
+                id={recipe._id}
+                title={recipe.title}
+                user={recipe.user.name}
+                ingredients={recipe.ingredients}
+                description={recipe.description}
+                photo={recipe.image}
+                profilePicture={recipe.user.profilePicture}
+                likedByMe={recipe.likedByMe}
+                bookmarkedByMe={recipe.bookmarkedByMe}
+              />
+            );
+          })}
         </div>
       </div>
-      <button className="cursor-pointer" onClick={change}>
-        button
-      </button>
     </>
   );
 };

@@ -1,8 +1,15 @@
 import express from "express";
-import { toggleLike, getLikes } from "../controllers/likeController.js";
+
 import auth from "../middlewares/auth.js";
+import {
+  toggleLike,
+  getLikes,
+  getLikedRecipes,
+} from "../controllers/likeController.js";
 
 const router = express.Router();
+
+router.get("/my-likes", auth, getLikedRecipes);
 
 // Toggle like/unlike
 router.post("/:recipeId", auth, toggleLike);

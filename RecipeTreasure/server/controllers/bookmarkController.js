@@ -29,9 +29,14 @@ export const toggleBookmark = async (req, res) => {
 export const getMyBookmarks = async (req, res) => {
   try {
     const userId = req.user.id;
-    const bookmarks = await Bookmark.find({ user: userId })
-      .populate("recipe")
-      .sort({ createdAt: -1 });
+    const bookmarks = await Bookmark.find({ user: userId }).populate({
+      path: "recipe",
+      select: "title description image ingredients category", // pick only needed fields
+    });
+    const bookmarkedRecipes = bookmarks
+      .map((bookmarks) => bookmarks.recipe)
+      .filter((r) => r !== null); // in case a recipe got deleted
+    console.log("bookmarkedRecipes:", bookmarkedRecipes);
 
     return res.status(200).json({ bookmarks });
   } catch (error) {

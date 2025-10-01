@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import api from "../api";
+import { Spin } from "antd";
 
 export default function RecipeForm() {
   const [photo, setPhoto] = useState(null);
@@ -10,6 +11,7 @@ export default function RecipeForm() {
   const [category, setCategory] = useState("");
   const [ingredients, setIngredients] = useState([]);
   const [instructions, setInstructions] = useState([""]);
+  const [loading, setLoading] = useState(false);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -20,6 +22,7 @@ export default function RecipeForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     const recipeData = new FormData();
     recipeData.append("image", photo);
     recipeData.append("title", title);
@@ -42,6 +45,7 @@ export default function RecipeForm() {
       setCategory("");
       setIngredients([]);
       setInstructions([""]);
+      setLoading(false);
     } catch (err) {
       console.error("Error posting recipe:", err.response?.data || err.message);
       alert("Error posting recipe");
@@ -219,7 +223,7 @@ export default function RecipeForm() {
             type="submit"
             className="w-[50%] bg-[#EFC81A] text-white py-2 rounded-lg mt-5 hover:bg-yellow-500"
           >
-            Post Recipe !!!
+            {loading ? <Spin /> : "Post Recipe !!!"}
           </button>
         </form>
       </div>
