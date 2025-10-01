@@ -107,7 +107,7 @@ const Navbar = () => {
 
             <button
               onClick={showLogoutModal}
-              className="text-sm underline cursor-pointer"
+              className="text-sm underline cursor-pointer text-decoration-none"
             >
               Logout
             </button>

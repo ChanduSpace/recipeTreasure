@@ -17,9 +17,6 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/home" element={<Home />} />
-        <Route path="/category/:category" element={<Category />} />
-
         <Route
           path="/login"
           element={<LoginAndSignupPage page={isLoginPage} />}
@@ -30,6 +27,8 @@ function App() {
         />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/category/:category" element={<Category />} />
           <Route path="/add-menu" element={<AddMenu />} />
           <Route path="/search" element={<Search />} />
           <Route path="/feed" element={<Feed />} />

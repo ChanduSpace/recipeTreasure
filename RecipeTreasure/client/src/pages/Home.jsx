@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 
 const Home = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = React.useState("");
   const category = [
     {
       name: "Salad",
@@ -21,6 +22,15 @@ const Home = () => {
     },
     { name: "Dessert", image: "" },
   ];
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log(searchTerm);
+    if (searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   const handleCategory = (cat) => {
     navigate(`/category/${cat.name}`);
     console.log(cat);
@@ -40,11 +50,15 @@ const Home = () => {
             </h1>
             <div className="border-[#EFC81A] border-1 rounded-full relative h-12 pl-2.5">
               <input
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search Your Favorite Food "
                 type="text"
                 className="!outline-none !border-none !mt-2.5 ml-4 w-[80%] placeholder-gray-300"
               />
-              <button className="absolute right-0 bg-[#EFC81A] rounded-[100%] h-10 w-10 mt-1 mr-1 text-white ">
+              <button
+                onClick={handleSearch}
+                className="absolute right-0 bg-[#EFC81A] rounded-[100%] h-10 w-10 mt-1 mr-1 text-white "
+              >
                 <ArrowRightOutlined />
               </button>
             </div>

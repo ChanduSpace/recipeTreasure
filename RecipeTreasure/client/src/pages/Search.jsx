@@ -1,20 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../api";
 import Navbar from "../components/Navbar";
 import RecipeCard from "../components/RecipeCard";
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 const Search = () => {
-  const [query, setQuery] = useState("");
+  const urlQuery = useQuery().get("q") || ""; // get query from URL
+  const [query, setQuery] = useState(urlQuery);
   const [category, setCategory] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async () => {
-    if (!query && !category) return; // nothing to search
+  // 🔹 Function to fetch results
+  const fetchResults = async (searchTerm, searchCategory) => {
+    if (!searchTerm && !searchCategory) return;
     setLoading(true);
     try {
       const { data } = await api.get("/recipe/search", {
-        params: { query, category },
+        params: { query: searchTerm, category: searchCategory },
       });
       setResults(data);
     } catch (err) {
@@ -22,6 +29,18 @@ const Search = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 🔹 Auto-run if redirected with ?q=...
+  useEffect(() => {
+    if (urlQuery) {
+      fetchResults(urlQuery, "");
+    }
+  }, [urlQuery]);
+
+  // 🔹 Manual search button click
+  const handleSearch = () => {
+    fetchResults(query, category);
   };
 
   return (
