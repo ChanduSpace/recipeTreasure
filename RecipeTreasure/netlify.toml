@@ -1,0 +1,14 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# redirect SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  # example placeholder — set real values in Netlify UI instead of hardcoding secrets
+  VITE_API_URL = "https://your-api.example.com"
